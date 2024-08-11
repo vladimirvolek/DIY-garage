@@ -7,8 +7,8 @@ int END_RIGHT = 22;
 
 int pulseCount = 0;
 int maxPulseCount = 0;
-int hranice = 1000;
-String smer = "leva"; // Initial direction is left
+int edge_gap = 1000;
+String direction = "left";
 bool isCalibrated = false;
 
 void setup()
@@ -20,33 +20,33 @@ void setup()
   pinMode(END_LEFT, INPUT_PULLUP);
   pinMode(END_RIGHT, INPUT_PULLUP);
 
-  digitalWrite(ENA, LOW); // Enable the motor driver
+  // Enable the motor driver
+  digitalWrite(ENA, LOW);
 
   Serial.begin(9600);
-  digitalWrite(DIR, HIGH); // Start by moving left
+
+  // Start by moving left
+  digitalWrite(DIR, HIGH);
 }
 
 void calibrate()
 {
   if (digitalRead(END_LEFT) == HIGH)
   {
-    // Hit left end stop, reset pulse count and move right
     Serial.println("Narazili jsme na koncak vlevo");
     pulseCount = 0;
-    digitalWrite(DIR, LOW); // Change direction to right
-    smer = "prava";
+    digitalWrite(DIR, LOW);
+    direction = "right";
   }
 
   if (digitalRead(END_RIGHT) == HIGH)
   {
-    // Hit right end stop, set max pulse count and prepare to move left
-    Serial.println("Narazili jsme na koncak vpravo");
     maxPulseCount = pulseCount;
-    Serial.print("Max Pulse Count: ");
-    Serial.println(maxPulseCount);
-    pulseCount = maxPulseCount; // Reset to max pulse count for accurate movement
-    digitalWrite(DIR, HIGH);    // Change direction to left
-    smer = "leva";
+    pulseCount = maxPulseCount;
+
+    digitalWrite(DIR, HIGH);
+
+    direction = "left";
     isCalibrated = true;
   }
 }
@@ -60,28 +60,28 @@ void loop()
   else
   {
     // Normal operation after calibration
-    if (pulseCount >= (maxPulseCount - hranice))
+    if (pulseCount >= (maxPulseCount - edge_gap))
     {
       // Reverse direction to left when approaching the right threshold
-      smer = "leva";
+      direction = "left";
       digitalWrite(DIR, HIGH);
     }
-    else if (pulseCount <= hranice)
+    else if (pulseCount <= edge_gap)
     {
       // Reverse direction to right when approaching the left threshold
-      smer = "prava";
+      direction = "right";
       digitalWrite(DIR, LOW);
     }
   }
 
   // Move the motor
   digitalWrite(PUL, HIGH);
-  delayMicroseconds(200);
+  delayMicroseconds(300);
   digitalWrite(PUL, LOW);
-  delayMicroseconds(200);
+  delayMicroseconds(300);
 
   // Increment or decrement pulse count based on direction
-  if (smer == "prava")
+  if (direction == "right")
   {
     pulseCount++;
   }
